@@ -39,6 +39,8 @@ class FeatureProperties(BaseModel):
     ele_m: Optional[float] = Field(
         None, description="Elevation in meters. Omit if unknown."
     )
+    # Raw identifier from the original data source, used for traceability or
+    # re-fetching upstream data.
     source: str = Field(..., description="e.g. 'osm', 'swisstopo', 'custom'")
     source_id: str = Field(..., description="Stable identifier from the source")
     meta: Dict[str, ScalarOrList] = Field(default_factory=dict)
@@ -49,6 +51,8 @@ class Feature(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     type: Literal["Feature"] = "Feature"
+    # Global, stable identifier within the dataset — can be used for
+    # deduplication, merging, and cross-referencing across sources.
     id: str = Field(..., description="Globally unique id, e.g. 'osm:node/12345'")
     geometry: PointGeometry
     properties: FeatureProperties
