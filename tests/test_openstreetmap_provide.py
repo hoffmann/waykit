@@ -50,9 +50,11 @@ def test_fetch_osm_features(mock_post):
     assert features == []
 
 
-def test_map_osm_element_to_feature():
+def test_map_osm_element_to_feature_node():
+    """Test mapping a node (point) element"""
     element = {
         "type": "node",
+        "id": 123,
         "lon": 0,
         "lat": 0,
         "tags": {"natural": "peak", "name": "Test Peak"}
@@ -60,6 +62,54 @@ def test_map_osm_element_to_feature():
     feature = map_osm_element_to_feature(element)
     assert feature is not None
     assert feature.properties.name == "Test Peak"
+    assert feature.properties.kind == "peak"
+    assert feature.properties.source_id == "node/123"
+    assert feature.geometry.coordinates == [0.0, 0.0]
+
+
+def test_map_osm_element_to_feature_way():
+    """Test mapping a way (polygon/area) element with center coordinates"""
+    element = {
+        "type": "way",
+        "id": 456,
+        "center": {"lon": 1.5, "lat": 2.5},
+        "tags": {"tourism": "alpine_hut", "name": "Test Hut"}
+    }
+    feature = map_osm_element_to_feature(element)
+    assert feature is not None
+    assert feature.properties.name == "Test Hut"
+    assert feature.properties.kind == "hut"
+    assert feature.properties.source_id == "way/456"
+    assert feature.geometry.coordinates == [1.5, 2.5]
+
+
+def test_map_osm_element_to_feature_relation():
+    """Test mapping a relation element with center coordinates"""
+    element = {
+        "type": "relation",
+        "id": 789,
+        "center": {"lon": 3.5, "lat": 4.5},
+        "tags": {"natural": "peak", "name": "Test Peak Area", "ele": "2500"}
+    }
+    feature = map_osm_element_to_feature(element)
+    assert feature is not None
+    assert feature.properties.name == "Test Peak Area"
+    assert feature.properties.kind == "peak"
+    assert feature.properties.source_id == "relation/789"
+    assert feature.properties.ele_m == 2500.0
+    assert feature.geometry.coordinates == [3.5, 4.5]
+
+
+def test_map_osm_element_to_feature_missing_center():
+    """Test that ways/relations without center coordinates return None"""
+    element = {
+        "type": "way",
+        "id": 999,
+        "tags": {"natural": "peak", "name": "Invalid"}
+        # Missing center field
+    }
+    feature = map_osm_element_to_feature(element)
+    assert feature is None
 
 
 def test_filter_by_proximity():

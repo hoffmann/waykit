@@ -93,19 +93,24 @@ def overpass_query_bbox(
     min_lon: float, min_lat: float, max_lon: float, max_lat: float
 ) -> str:
     """
-    Query for nodes:
+    Query for nodes, ways, and relations:
       - natural=peak
       - tourism=alpine_hut
     in bbox (S,W,N,E).
+    Uses 'out center' to get center coordinates for ways and relations.
     """
     bbox = f"{min_lat},{min_lon},{max_lat},{max_lon}"
     return f"""
 [out:json][timeout:25];
 (
   node["natural"="peak"]({bbox});
+  way["natural"="peak"]({bbox});
+  relation["natural"="peak"]({bbox});
   node["tourism"="alpine_hut"]({bbox});
+  way["tourism"="alpine_hut"]({bbox});
+  relation["tourism"="alpine_hut"]({bbox});
 );
-out body;
+out center;
 """
 
 
@@ -138,14 +143,26 @@ class FilterConfig:
 
 def map_osm_element_to_feature(elem: Dict[str, Any]) -> Optional[Feature]:
     """
-    Map an Overpass element (node) to a Feature.
+    Map an Overpass element (node, way, or relation) to a Feature.
     Supports peaks and alpine huts. Returns None for other kinds.
+    For ways and relations, uses the center coordinates returned by 'out center'.
     """
-    if elem.get("type") != "node":
+    elem_type = elem.get("type")
+    if elem_type not in ("node", "way", "relation"):
         return None
 
-    lon = elem.get("lon")
-    lat = elem.get("lat")
+    # For nodes, coordinates are directly in lon/lat fields
+    # For ways and relations, coordinates are in the center field
+    if elem_type == "node":
+        lon = elem.get("lon")
+        lat = elem.get("lat")
+    else:  # way or relation
+        center = elem.get("center")
+        if not center:
+            return None
+        lon = center.get("lon")
+        lat = center.get("lat")
+
     if lon is None or lat is None:
         return None
 
@@ -166,7 +183,7 @@ def map_osm_element_to_feature(elem: Dict[str, Any]) -> Optional[Feature]:
             ele_m = float(str(tags["ele"]).replace("m", "").strip())
         except Exception:
             ele_m = None
-    source_id = f"node/{elem.get('id')}"
+    source_id = f"{elem_type}/{elem.get('id')}"
     return Feature(
         geometry=PointGeometry(coordinates=[float(lon), float(lat)]),
         id=f"osm:{source_id}",
@@ -175,7 +192,7 @@ def map_osm_element_to_feature(elem: Dict[str, Any]) -> Optional[Feature]:
             kind=kind,  # "peak" or "hut"
             ele_m=ele_m,
             source="osm",
-            source_id=f"node/{elem.get('id')}",
+            source_id=source_id,
             meta={"osm_tags": [f"{k}={v}" for k, v in sorted(tags.items())]},
         ),
     )
