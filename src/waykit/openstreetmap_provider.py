@@ -257,3 +257,51 @@ def gpx_to_features(
     kept = filter_by_proximity(osm_features, gpx_points, distance_m)
 
     return FeatureCollection(features=kept)
+
+
+def gpx_files_to_features(
+    gpx_paths: List[str],
+    margin_km: float = 2.0,
+    distance_m: float = 500.0,
+    user_agent: str = "waykit/1.0",
+) -> FeatureCollection:
+    """
+    Process multiple GPX files and return nearby features.
+    Combines all points from all GPX files, computes a single bbox,
+    and makes a single API call to Overpass.
+    """
+    all_gpx_points: List[Tuple[float, float]] = []
+
+    # Parse all GPX files and collect points
+    for gpx_path in gpx_paths:
+        with open(gpx_path, "r", encoding="utf-8") as f:
+            gpx = gpxpy.parse(f)
+        points = extract_gpx_points(gpx)
+        all_gpx_points.extend(points)
+
+    if not all_gpx_points:
+        return FeatureCollection(features=[])
+
+    # Compute bbox + margin for all points
+    b = bbox_of_points(all_gpx_points)
+    if b is None:
+        return FeatureCollection(features=[])
+
+    min_lon, min_lat, max_lon, max_lat = expand_bbox(b, margin_km)
+
+    # Query OSM once for the combined bbox
+    elements = fetch_osm_features(
+        min_lon, min_lat, max_lon, max_lat, user_agent=user_agent
+    )
+
+    # Convert to Features (peaks and huts)
+    osm_features = []
+    for e in elements:
+        f = map_osm_element_to_feature(e)
+        if f is not None:
+            osm_features.append(f)
+
+    # Proximity filter against all GPX points
+    kept = filter_by_proximity(osm_features, all_gpx_points, distance_m)
+
+    return FeatureCollection(features=kept)
