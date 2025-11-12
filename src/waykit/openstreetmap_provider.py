@@ -6,6 +6,7 @@ from typing import Iterable, List, Tuple, Dict, Any, Optional
 
 import requests
 import gpxpy
+import time
 
 from .models import (
     FeatureCollection,
@@ -135,6 +136,7 @@ def fetch_osm_features(
         except requests.RequestException as e:
             if attempt < max_retries - 1:
                 print(f"[WARN] Overpass request failed (attempt {attempt + 1}/{max_retries}): {e}")
+                time.sleep(2 ** attempt)  # exponential backoff
             else:
                 print(f"[ERROR] Overpass request failed after {max_retries} attempts: {e}")
     return []
