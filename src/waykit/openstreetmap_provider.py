@@ -123,17 +123,21 @@ def fetch_osm_features(
         "User-Agent": user_agent,
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    try:
-        resp = requests.post(
-            OVERPASS_URL, data=q.encode("utf-8"), headers=headers, timeout=30
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        return data.get("elements", [])
-    except requests.RequestException as e:
-        # In production you might log this or raise a custom error
-        print(f"[ERROR] Overpass request failed: {e}")
-        return []
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            resp = requests.post(
+                OVERPASS_URL, data=q.encode("utf-8"), headers=headers, timeout=30
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("elements", [])
+        except requests.RequestException as e:
+            if attempt < max_retries - 1:
+                print(f"[WARN] Overpass request failed (attempt {attempt + 1}/{max_retries}): {e}")
+            else:
+                print(f"[ERROR] Overpass request failed after {max_retries} attempts: {e}")
+    return []
 
 
 @dataclass
