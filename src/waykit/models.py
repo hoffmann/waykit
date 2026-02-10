@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict
 Scalar = Union[int, float, str]
 ScalarOrList = Union[Scalar, List[Scalar]]
 
-Kind = Literal["hut", "peak", "poi", "other"]
+Kind = Literal["hut", "peak", "place", "poi", "other"]
 
 
 class PointGeometry(BaseModel):

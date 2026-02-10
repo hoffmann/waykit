@@ -27,6 +27,7 @@ def overpass_query_bbox(
     Query for nodes, ways, and relations:
       - natural=peak
       - tourism=alpine_hut
+      - place=city/town/village/hamlet
     in bbox (S,W,N,E).
     Uses 'out center' to get center coordinates for ways and relations.
     """
@@ -40,6 +41,7 @@ def overpass_query_bbox(
   node["tourism"="alpine_hut"]({bbox});
   way["tourism"="alpine_hut"]({bbox});
   relation["tourism"="alpine_hut"]({bbox});
+  node["place"~"^(city|town|village|hamlet)$"]({bbox});
 );
 out center;
 """
@@ -77,10 +79,14 @@ class FilterConfig:
     distance_m: float = 500.0  # keep OSM features within this distance to any GPX point
 
 
+PLACE_VALUES = {"city", "town", "village", "hamlet"}
+
+
 def map_osm_element_to_feature(elem: Dict[str, Any]) -> Optional[Feature]:
     """
     Map an Overpass element (node, way, or relation) to a Feature.
-    Supports peaks and alpine huts. Returns None for other kinds.
+    Supports peaks, alpine huts, and places (city/town/village/hamlet).
+    Returns None for other kinds.
     For ways and relations, uses the center coordinates returned by 'out center'.
     """
     elem_type = elem.get("type")
@@ -107,6 +113,8 @@ def map_osm_element_to_feature(elem: Dict[str, Any]) -> Optional[Feature]:
         kind = "peak"
     elif tags.get("tourism") == "alpine_hut":
         kind = "hut"
+    elif tags.get("place") in PLACE_VALUES:
+        kind = "place"
     else:
         return None
 
