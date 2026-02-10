@@ -16,6 +16,7 @@ Usage::
 
 from __future__ import annotations
 
+import gzip
 import json
 from importlib import resources
 from pathlib import Path
@@ -100,21 +101,25 @@ def jsonl_row_to_feature(row: Dict[str, Any]) -> Feature:
 # ------------------------------------------------------------
 
 def load_index(data_path: Optional[Path] = None) -> SquareGridIndex[Feature]:
-    """Load the JSONL data file and build a spatial index.
+    """Load a JSONL (or gzipped JSONL) data file and build a spatial index.
 
     Args:
-        data_path: Explicit path to a JSONL file.  When *None* (the default),
-            the bundled ``data/alps-huts.jsonl`` inside the package is used.
+        data_path: Explicit path to a ``.jsonl`` or ``.jsonl.gz`` file.
+            When *None* (the default), the bundled
+            ``data/alps-huts.jsonl.gz`` inside the package is used.
 
     Returns:
         A populated :class:`SquareGridIndex` mapping grid cells to
         :class:`Feature` objects.
     """
     if data_path is not None:
-        text = data_path.read_text(encoding="utf-8")
+        if str(data_path).endswith(".gz"):
+            text = gzip.decompress(data_path.read_bytes()).decode("utf-8")
+        else:
+            text = data_path.read_text(encoding="utf-8")
     else:
-        ref = resources.files("waykit").joinpath("data/alps-huts.jsonl")
-        text = ref.read_text(encoding="utf-8")
+        ref = resources.files("waykit").joinpath("data/alps-huts.jsonl.gz")
+        text = gzip.decompress(ref.read_bytes()).decode("utf-8")
 
     index: SquareGridIndex[Feature] = SquareGridIndex(
         cell_size_m=_CELL_SIZE_M,
