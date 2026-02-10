@@ -1,6 +1,6 @@
 [project]
 name = "waykit"
-version = "0.1.0"
+version = "0.2.0"
 description = "generate location metatata like peaks, huts for a given gpx file"
 readme = "README.md"
 authors = [
