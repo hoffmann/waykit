@@ -1,6 +1,7 @@
 from .models import (Feature, FeatureCollection, FeatureProperties, PointGeometry)
 import argparse
-from .openstreetmap_provider import gpx_to_features, gpx_files_to_features
+from . import openstreetmap_provider
+from . import cached_provider
 
 from pathlib import Path
 
@@ -24,17 +25,25 @@ def main():
     ap = argparse.ArgumentParser(description="Extract nearby peaks and huts from OSM around a GPX route.")
     ap.add_argument("gpx", nargs="+", help="Path(s) to input GPX file(s)")
     ap.add_argument("-o", "--out", default="nearby_features.geojson", help="Output GeoJSON file")
+    ap.add_argument("--provider", choices=["openstreetmap", "cached"], default="openstreetmap",
+                    help="Data provider: 'openstreetmap' (live Overpass API) or 'cached' (bundled JSONL)")
     ap.add_argument("--margin-km", type=float, default=2.0, help="BBox margin around GPX (km)")
     ap.add_argument("--distance-m", type=float, default=500.0, help="Max distance from GPX points to keep features (m)")
     ap.add_argument("--user-agent", default="waykit/0.1 (example script; contact: you@example.com)", help="HTTP User-Agent for Overpass")
     args = ap.parse_args()
 
-    fc = gpx_files_to_features(
-        gpx_paths=args.gpx,
-        margin_km=args.margin_km,
-        distance_m=args.distance_m,
-        user_agent=args.user_agent,
-    )
+    if args.provider == "cached":
+        fc = cached_provider.gpx_files_to_features(
+            gpx_paths=args.gpx,
+            distance_m=args.distance_m,
+        )
+    else:
+        fc = openstreetmap_provider.gpx_files_to_features(
+            gpx_paths=args.gpx,
+            margin_km=args.margin_km,
+            distance_m=args.distance_m,
+            user_agent=args.user_agent,
+        )
 
     # Write GeoJSON
     out_path = args.out

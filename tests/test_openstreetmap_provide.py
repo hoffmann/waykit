@@ -1,8 +1,10 @@
-from waykit.openstreetmap_provider import (
+from waykit.geo import (
     haversine_m,
     bbox_of_points,
     expand_bbox,
     extract_gpx_points,
+)
+from waykit.openstreetmap_provider import (
     fetch_osm_features,
     map_osm_element_to_feature,
     filter_by_proximity,
