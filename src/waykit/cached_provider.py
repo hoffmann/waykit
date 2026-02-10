@@ -80,7 +80,7 @@ def jsonl_row_to_feature(row: Dict[str, Any]) -> Feature:
 
     uri = row.get("uri", "")
     # uri looks like "osm:node:12345" — convert to source_id "node:12345"
-    source_id = uri.removeprefix("osm:")
+    source_id = uri
 
     return Feature(
         id=uri,

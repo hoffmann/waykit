@@ -12,3 +12,4 @@ wheels/
 #local env variables
 .env
 .envrc
+.claude

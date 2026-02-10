@@ -36,7 +36,7 @@ class TestJsonlRowToFeature:
         assert feat.properties.kind == "hut"
         assert feat.properties.ele_m == 2500.0
         assert feat.properties.source == "osm"
-        assert feat.properties.source_id == "node:12345"
+        assert feat.properties.source_id == "osm:node:12345"
         assert feat.geometry.coordinates == [7.5, 46.5]
 
     def test_url_in_meta(self):
