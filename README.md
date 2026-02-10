@@ -4,6 +4,10 @@ waykit
 waykit is a python tool to generate location metatata like peaks, huts and
 other pois for a given gpx file
 
+> **Note:** waykit is in early development (pre-1.0). It is not meant for
+> production usage. Breaking changes to the API, CLI interface, data format,
+> and module structure are to be expected between releases.
+
 ## Usage
 
 You can run the tool directly from github with [uvx](https://docs.astral.sh/uv/guides/tools/#requesting-different-sources)
@@ -56,7 +60,9 @@ waykit --provider cached -o output.geojson input.gpx
 ```
 
 The cached dataset currently covers alpine huts in the Alps. It will be
-expanded over time to include peaks and other POI types.
+expanded over time to include peaks and other POI types. The bundled data
+is derived from OpenStreetMap via Geofabrik and licensed under ODbL — see
+[LICENSE.md](LICENSE.md) for details.
 
 
 ## Spatial indexing
